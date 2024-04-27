@@ -1,45 +1,111 @@
-import { render } from "./view.js";
 import * as yup from "yup";
-import onChange from 'on-change';
+import i18n from "i18next";
+import resources from './locales/index.js';
+import locale from "./locales/yupLocale.js";
+import watch from "./view.js";
+import axios from "axios";
+import {uniqueId} from 'lodash';
+import parseXml from './rss.js'
 
-export default () =>{
+export default () => {
     const elements = {
         form: document.querySelector('form'),
-        input: document.querySelector('input'),
-        submit: document.querySelector('button[type="submit"]')
-    }
-    const initialState = {
-        url: '',
-        feedList: [],
+        input: document.querySelector('#url-input'),
+        feedback: document.querySelector('.feedback'),
+        feeds: document.querySelector('.feeds'),
+        posts: document.querySelector('.posts'),
+        textNodes: {
+            heading: document.querySelector('h1[class="display-3 mb-0"]'),
+            subheading: document.querySelector('p[class="lead"]'),
+            RSSLink: document.querySelector('label[for="url-input"]'),
+            readAllBtn: document.querySelector('a[class="btn btn-primary full-article"]'),
+            closeModalBtn: document.querySelector('button[class="btn btn-secondary"]'),
+            addBtn: document.querySelector('button[class="h-100 btn btn-lg btn-primary px-sm-5"]'),
+            example: document.querySelector('p[class="mt-2 mb-0 text-muted"]'),
+        },
+    };
+
+    const state = {
+        feeds: [],
+        posts: [],
         form: {
-            isValid: false,
-            errors: []
-        }
+            error: '',
+            value: '',
+        },
+        language: 'ru',
     }
-    const watchedState = onChange(initialState, (path, value) => {
-        initialState.url = value
+
+    const i18nI = i18n.createInstance();
+    i18nI.init({
+        lng: state.language,
+        resources,
     })
+
+    yup.setLocale(locale);
+
+    const translatePage = () => {
+        Object.keys(elements.textNodes).forEach((node)=>{
+            elements.textNodes[node].textContent = i18nI.t(node);
+        })
+    }
+
+    translatePage();
+
+    const watchedState = watch(state, elements, i18nI);
+
     const validateUrl = (link, collection) => {
         const schemaStr = yup.string().required().url().trim();
         const schemaMix = yup.mixed().notOneOf(collection);
         return schemaStr.validate(link)
-          .then((url) => schemaMix.validate(url));
-      };
+            .then((url) => schemaMix.validate(url));
+    };
+
+    const addPosts = (posts, feedId, state) => {
+        const postsWithId = posts.map(post => {
+            const id = _.uniqueId();
+            return {
+                feedId,
+                id,
+                ...post
+            }
+        });
+        state.posts.push(...postsWithId)
+    }
     
-    elements.form.addEventListener('submit', (e)=> {
+    const getRss = (rssLink, state, i18nI) => {
+        axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${rssLink}`)
+            .then(response => {
+                try {
+                    const xmlDoc = response.data.contents;
+                    const {feed, posts} = parseXml(xmlDoc)
+                    const feedId = uniqueId();
+                    state.feeds.push({id: feedId, url: rssLink, ...feed});
+                    addPosts(posts, feedId, state);
+                    console.log(state)
+                    watchedState.form.error = ''
+                } catch(e) {
+                    watchedState.form.error = i18nI.t(`errors.noRss`);
+                }
+            })
+            .catch(function (error) {
+                watchedState.form.error = i18nI.t(`errors.network`);
+            })
+            .finally (() => {
+    
+            })
+    }
+    elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const url = new FormData(elements.form).get('url');
-        watchedState.url = url;
-        const links = watchedState.feedList;
-        validateUrl(url, links).then(()=>{
-            watchedState.form.isValid = true;
-            watchedState.feedList.push(url);
-            console.log(initialState);
-            render(watchedState, elements);
-        }).catch((e)=>{
-            watchedState.form.isValid = false;
-            console.log(e);
-            render(watchedState, elements);
+        const currentValue = elements.input.value
+        watchedState.form.value = currentValue;
+        const links = watchedState.feeds.map((feed)=>feed.url);
+        validateUrl(currentValue, links).then(() => {
+            getRss(currentValue, watchedState, i18nI);
+        }).catch((err) => {
+            console.log(err)
+            const message = err.errors.map((error) => i18nI.t(`errors.${error.key}`))[0];
+            watchedState.form.error = message;
         })
     })
 }
+
