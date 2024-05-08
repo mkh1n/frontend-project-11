@@ -8,7 +8,6 @@ const watch = (state, elements, i18nI) => {
             elements.feedback.classList.remove('text-success');
             elements.feedback.classList.add('text-danger');
         } else {
-            console.log('111', state)
             elements.input.value = '';
             elements.input.focus();
             elements.input.classList.remove('is-invalid');
@@ -20,55 +19,43 @@ const watch = (state, elements, i18nI) => {
     })
     return watchedState;
 }
-const renderFeeds = (state, elements, i18nI) => {
-    const { feeds } = state;
+const renderFeeds = (wacthedState, elements, i18nI) => {
+    const state = JSON.parse(JSON.stringify(wacthedState))
 
     //feeds render
     const feedsEl = document.createElement('div');
     feedsEl.classList.add('card', 'border-0');
-
-    const feedCardBodyEl = document.createElement('div');
-    feedCardBodyEl.classList.add('card-body');
-    feedCardBodyEl.innerHTML = `<h2 class="card-title h4">Фиды</h2>`;
+    feedsEl.innerHTML = `<div class="card-body"><h2 class="card-title h4">${i18nI.t('feeds')}</h2></div>`
    
     const feedsUlEl = document.createElement('ul');
     feedsUlEl.classList.add('list-group', 'border-0', 'border-end-0');
 
-    for (var feed of state.feeds) {
+    state.feeds.forEach((feed) => {
         const feedLi = document.createElement('li');
         feedLi.innerHTML = `<li class="list-group-item border-0 border-end-0"><h3 class="h6 m-0">${feed.title}</h3><p class="m-0 small text-black-50">${feed.description}</p></li>`
-        feedsEl.appendChild(feedLi)
-    }
-    feedCardBodyEl.appendChild(feedsUlEl);
-    feedsEl.appendChild(feedCardBodyEl);
+        feedsUlEl.appendChild(feedLi)
+    });
+    feedsEl.appendChild(feedsUlEl);
 
     //posts render
     const postsEl = document.createElement('div');
     postsEl.classList.add('card', 'border-0');
-
-    const postCardBodyEl = document.createElement('div');
-    postCardBodyEl.classList.add('card-body');
-    postCardBodyEl.innerHTML = `<h2 class="card-title h4">Посты</h2>`;
+    postsEl.innerHTML = `<div class="card-body"><h2 class="card-title h4">${i18nI.t('posts')}</h2></div>`
 
     const postsUlEl = document.createElement('ul');
-    postsUlEl.classList.add('list-group-item', 'border-0', 'border-end-0');
-    console.log(state.posts)  
-    console.log(Array.isArray(state.posts))
-    state['posts'].map((post)=>{
-        console.log('222', post)
-    })
-    state.posts.forEach(post => {
-        console.log(111, post)
+    postsUlEl.classList.add('list-group', 'border-0', 'rounded-0');
+
+    state.posts.forEach((post) => {
         const postLi = document.createElement('li');
-        postLi.innerHTML = `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0"><a href="${post.link}" class="fw-bold" data-id="${post.d}" target="_blank" rel="noopener noreferrer">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-id="${post.id}" data-bs-toggle="modal" data-bs-target="#modal">Просмотр</button></li>`
+        postLi.innerHTML = `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0"><a href="${post.link}" class="fw-bold" data-id="${post.d}" target="_blank" rel="noopener noreferrer">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-id="${post.id}" data-bs-toggle="modal" data-bs-target="#modal">${i18nI.t('view')}</button></li>`
         postsUlEl.appendChild(postLi);
     });
 
-    postCardBodyEl.appendChild(postsUlEl);
-    postsEl.appendChild(postCardBodyEl);
+    postsEl.appendChild(postsUlEl);
 
+    elements.feeds.innerHTML = '';
+    elements.posts.innerHTML = '';
 
-    console.log(state)  
     elements.feeds.append(feedsEl);
     elements.posts.append(postsEl);
 

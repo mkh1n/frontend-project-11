@@ -8,7 +8,10 @@ export default {
       readAllBtn: 'Читать полностью',
       closeModalBtn: 'Закрыть',
       addBtn: 'Добавить',
-      successfullyLoaded: 'RSS был успешно загружен',
+      successfullyLoaded: 'RSS успешно загружен',
+      posts: 'Посты',
+      feeds: 'Фиды',
+      view: 'Просмотр',
       errors: {
         required: 'Это обязательное поле',
         invalid: 'Ссылка должна быть валидным URL',

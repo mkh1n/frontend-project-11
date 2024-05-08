@@ -69,29 +69,33 @@ export default () => {
                 ...post
             }
         });
-        state.posts.push(...postsWithId)
+        state.posts.unshift(...postsWithId)
     }
     
     const getRss = (rssLink, state, i18nI) => {
-        axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${rssLink}`)
+        return new Promise((resolve, reject)=>{
+            axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${rssLink}`)
             .then(response => {
                 try {
                     const xmlDoc = response.data.contents;
                     const {feed, posts} = parseXml(xmlDoc)
                     const feedId = uniqueId();
-                    state.feeds.push({id: feedId, url: rssLink, ...feed});
+                    state.feeds.unshift({id: feedId, url: rssLink, ...feed});
                     addPosts(posts, feedId, state);
                     watchedState.form.error = ''
+                    resolve();
                 } catch(e) {
                     watchedState.form.error = i18nI.t(`errors.noRss`);
                 }
             })
-            .catch(function (error) {
+            .catch(function (e) {
                 watchedState.form.error = i18nI.t(`errors.network`);
             })
             .finally (() => {
     
             })
+        })
+        
     }
     elements.form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -99,8 +103,10 @@ export default () => {
         watchedState.form.value = currentValue;
         const links = watchedState.feeds.map((feed)=>feed.url);
         validateUrl(currentValue, links).then(() => {
-            getRss(currentValue, watchedState, i18nI);
-            renderFeeds(watchedState, elements, i18nI)
+            getRss(currentValue, watchedState, i18nI)
+            .then(()=>{
+                renderFeeds(watchedState, elements, i18nI)
+            })
         }).catch((err) => {
             console.log(err)
             const message = err.errors.map((error) => i18nI.t(`errors.${error.key}`))[0];
