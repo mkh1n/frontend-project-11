@@ -8,11 +8,11 @@ export default  (xml) => {
     }
     const items = doc.querySelectorAll('item');
     const posts = Array.from(items).reduce((acc, item) => {
-        const feed = {};
-        feed.title = item.querySelector('title').textContent;
-        feed.description = item.querySelector('description').textContent;
-        feed.link = item.querySelector('link').textContent;
-        return [...acc, feed]
+        const post = {};
+        post.title = item.querySelector('title').textContent;
+        post.description = item.querySelector('description').textContent;
+        post.link = item.querySelector('link').textContent;
+        return [...acc, post]
     }, [])
     
     return {feed, posts};

@@ -2,10 +2,10 @@ import * as yup from "yup";
 import i18n from "i18next";
 import resources from './locales/index.js';
 import locale from "./locales/yupLocale.js";
-import watch from "./view.js";
 import axios from "axios";
 import {uniqueId} from 'lodash';
 import parseXml from './rss.js'
+import {watch, renderFeeds} from './view.js'
 
 export default () => {
     const elements = {
@@ -81,7 +81,6 @@ export default () => {
                     const feedId = uniqueId();
                     state.feeds.push({id: feedId, url: rssLink, ...feed});
                     addPosts(posts, feedId, state);
-                    console.log(state)
                     watchedState.form.error = ''
                 } catch(e) {
                     watchedState.form.error = i18nI.t(`errors.noRss`);
@@ -101,6 +100,7 @@ export default () => {
         const links = watchedState.feeds.map((feed)=>feed.url);
         validateUrl(currentValue, links).then(() => {
             getRss(currentValue, watchedState, i18nI);
+            renderFeeds(watchedState, elements, i18nI)
         }).catch((err) => {
             console.log(err)
             const message = err.errors.map((error) => i18nI.t(`errors.${error.key}`))[0];
