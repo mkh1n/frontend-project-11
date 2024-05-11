@@ -1,32 +1,38 @@
 import onChange from "on-change";
-
-const watch = (state, elements, i18nI) => {
-    const watchedState = onChange(state, (path) => {
-        if (watchedState.form.error) {
+const formHandler = (elements, state, status, i18nI) => {
+    elements.submitBtn.disabled = (status == 'sending');
+    switch (status) {
+        case 'error':
             elements.input.classList.add('is-invalid');
-            elements.feedback.textContent = state.form.error;
+            elements.feedback.textContent = state.form.errorMessage;
             elements.feedback.classList.remove('text-success');
             elements.feedback.classList.add('text-danger');
-        } else {
+            break;
+    
+        case 'sent':
             elements.input.value = '';
             elements.input.focus();
             elements.input.classList.remove('is-invalid');
             elements.feedback.textContent = i18nI.t('successfullyLoaded');
             elements.feedback.classList.add('text-success');
             elements.feedback.classList.remove('text-danger');
-        }
+            break;
 
-    })
-    return watchedState;
+        case 'filling':
+        case 'sending':
+            break;
+
+        default:
+            break;
+    }
+
 }
 const renderFeeds = (wacthedState, elements, i18nI) => {
     const state = JSON.parse(JSON.stringify(wacthedState))
-
-    //feeds render
     const feedsEl = document.createElement('div');
     feedsEl.classList.add('card', 'border-0');
     feedsEl.innerHTML = `<div class="card-body"><h2 class="card-title h4">${i18nI.t('feeds')}</h2></div>`
-   
+
     const feedsUlEl = document.createElement('ul');
     feedsUlEl.classList.add('list-group', 'border-0', 'border-end-0');
 
@@ -37,7 +43,13 @@ const renderFeeds = (wacthedState, elements, i18nI) => {
     });
     feedsEl.appendChild(feedsUlEl);
 
-    //posts render
+    elements.feeds.innerHTML = '';
+    elements.feeds.append(feedsEl);
+}
+const renderPosts = (wacthedState, elements, i18nI) => {
+    const state = JSON.parse(JSON.stringify(wacthedState))
+
+    elements.posts.innerHTML = '';
     const postsEl = document.createElement('div');
     postsEl.classList.add('card', 'border-0');
     postsEl.innerHTML = `<div class="card-body"><h2 class="card-title h4">${i18nI.t('posts')}</h2></div>`
@@ -52,12 +64,24 @@ const renderFeeds = (wacthedState, elements, i18nI) => {
     });
 
     postsEl.appendChild(postsUlEl);
-
-    elements.feeds.innerHTML = '';
-    elements.posts.innerHTML = '';
-
-    elements.feeds.append(feedsEl);
     elements.posts.append(postsEl);
 
 }
-export { watch, renderFeeds };
+export default (state, elements, i18nI) => {
+    const watchedState = onChange(state, (path, value) => {
+        switch (path) {
+            case ('status'):
+                formHandler(elements, state, value, i18nI)
+                break;
+            case ('posts'):
+                renderPosts(state, elements, i18nI);
+                break;
+            case ('feeds'):
+                renderFeeds(state, elements, i18nI);
+                break;
+            default:
+                break;
+        }
+    })
+    return watchedState;
+}
