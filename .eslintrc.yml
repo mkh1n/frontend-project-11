@@ -6,8 +6,6 @@ extends:
 parserOptions:
   ecmaVersion: latest
 rules:
-  indent: off
-  no-tabs: off
   import/extensions: 0
   import/no-unresolved: 0
   no-param-reassign: 0
