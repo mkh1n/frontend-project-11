@@ -1,4 +1,5 @@
 import onChange from "on-change";
+
 const formHandler = (elements, state, status, i18nI) => {
     elements.submitBtn.disabled = (status == 'sending');
     switch (status) {
@@ -8,7 +9,7 @@ const formHandler = (elements, state, status, i18nI) => {
             elements.feedback.classList.remove('text-success');
             elements.feedback.classList.add('text-danger');
             break;
-    
+
         case 'sent':
             elements.input.value = '';
             elements.input.focus();
@@ -27,8 +28,22 @@ const formHandler = (elements, state, status, i18nI) => {
     }
 
 }
-const renderFeeds = (wacthedState, elements, i18nI) => {
-    const state = JSON.parse(JSON.stringify(wacthedState))
+const visitPost = (visitedPostsid) => {
+    visitedPostsid.forEach((id) => {
+        const link = document.querySelector(`a[data-id="${id}"]`);
+        link.classList.remove('fw-bold');
+        link.classList.add('fw-normal');
+    })
+
+}
+const renderModal = (state, postId, elements) => {
+    const post = state.posts.find(post => post.id === postId);
+    elements.modalBody.innerHTML = post.description;
+    elements.modalTitle.textContent = post.title;
+    elements.textNodes.readAll.href = post.link;
+}
+
+const renderFeeds = (state, elements, i18nI) => {
     const feedsEl = document.createElement('div');
     feedsEl.classList.add('card', 'border-0');
     feedsEl.innerHTML = `<div class="card-body"><h2 class="card-title h4">${i18nI.t('feeds')}</h2></div>`
@@ -46,9 +61,7 @@ const renderFeeds = (wacthedState, elements, i18nI) => {
     elements.feeds.innerHTML = '';
     elements.feeds.append(feedsEl);
 }
-const renderPosts = (wacthedState, elements, i18nI) => {
-    const state = JSON.parse(JSON.stringify(wacthedState))
-
+const renderPosts = (state, elements, i18nI) => {
     elements.posts.innerHTML = '';
     const postsEl = document.createElement('div');
     postsEl.classList.add('card', 'border-0');
@@ -59,13 +72,18 @@ const renderPosts = (wacthedState, elements, i18nI) => {
 
     state.posts.forEach((post) => {
         const postLi = document.createElement('li');
-        postLi.innerHTML = `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0"><a href="${post.link}" class="fw-bold" data-id="${post.d}" target="_blank" rel="noopener noreferrer">${post.title}</a><button type="button" class="btn btn-outline-primary btn-sm" data-id="${post.id}" data-bs-toggle="modal" data-bs-target="#modal">${i18nI.t('view')}</button></li>`
+
+        postLi.innerHTML = `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">
+        <a href="${post.link}" class="fw-bold" data-id="${post.id}" target="_blank" rel="noopener noreferrer">${post.title}</a>
+        <button type="button" class="btn btn-outline-primary btn-sm" data-id="${post.id}" data-bs-toggle="modal" 
+        data-bs-target="#modal">${i18nI.t('view')}</button></li>`
+
         postsUlEl.appendChild(postLi);
     });
 
     postsEl.appendChild(postsUlEl);
     elements.posts.append(postsEl);
-
+    visitPost(state.uiState.visitedPostsId);
 }
 export default (state, elements, i18nI) => {
     const watchedState = onChange(state, (path, value) => {
@@ -79,6 +97,11 @@ export default (state, elements, i18nI) => {
             case ('feeds'):
                 renderFeeds(state, elements, i18nI);
                 break;
+            case ('uiState.openModalId'):
+                renderModal(state, value, elements)
+                break;
+            case ('uiState.visitedPostsId'):
+                visitPost(value)
             default:
                 break;
         }

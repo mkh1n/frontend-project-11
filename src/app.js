@@ -15,12 +15,14 @@ export default () => {
         feeds: document.querySelector('.feeds'),
         posts: document.querySelector('.posts'),
         submitBtn: document.querySelector('button[type="submit"]'),
+        modalTitle: document.querySelector('.modal-title'),
+        modalBody: document.querySelector('.modal-body'),
         textNodes: {
+            closeModal: document.querySelector('button[class="btn btn-secondary"]'),
+            readAll: document.querySelector('a[class="btn btn-primary full-article"]'),
             heading: document.querySelector('h1[class="display-3 mb-0"]'),
             subheading: document.querySelector('p[class="lead"]'),
             RSSLink: document.querySelector('label[for="url-input"]'),
-            readAllBtn: document.querySelector('a[class="btn btn-primary full-article"]'),
-            closeModalBtn: document.querySelector('button[class="btn btn-secondary"]'),
             addBtn: document.querySelector('button[class="h-100 btn btn-lg btn-primary px-sm-5"]'),
             example: document.querySelector('p[class="mt-2 mb-0 text-muted"]'),
         },
@@ -33,6 +35,10 @@ export default () => {
         form: {
             errorMessage: '',
             value: '',
+        },
+        uiState: {
+            openModalId: '',
+            visitedPostsId: new Set()
         },
         language: 'ru',
     }
@@ -82,7 +88,7 @@ export default () => {
                 axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${rssLink}`)
                     .then(response => {
                         const { posts } = parseXml(response.data.contents)
-                        const feedId = state.feeds[index].feedId
+                        const feedId = state.feeds[index].id
                         addPosts(posts, feedId, state);
                         resolve();
                     })
@@ -115,6 +121,7 @@ export default () => {
                         }, 5000);
                         resolve();
                     } catch (e) {
+                        console.log(e)
                         state.form.errorMessage = i18nI.t(`errors.noRss`);
                         state.status = 'error'
 
@@ -138,12 +145,24 @@ export default () => {
         validateUrl(currentValue, links)
             .then(() => {
                 loadRss(currentValue, watchedState, i18nI)
-        }).catch((err) => {
-            const message = err.errors.map((error) => i18nI.t(`errors.${error.key}`))[0];
-            watchedState.form.errorMessage = message;
-            watchedState.status = 'error'
+            }).catch((err) => {
+                const message = err.errors.map((error) => i18nI.t(`errors.${error.key}`))[0];
+                watchedState.form.errorMessage = message;
+                watchedState.status = 'error'
 
-        })
+            })
     })
+
+    elements.posts.addEventListener('click', (event) => {
+        if (event.target.matches('[data-bs-toggle="modal"]')) {
+            watchedState.uiState.openModalId =  event.target.dataset.id;
+            watchedState.uiState.visitedPostsId.add(event.target.dataset.id);
+        }
+        if (event.target.matches(`a[data-id="${event.target.dataset.id}"]`)){
+            watchedState.uiState.visitedPostsId.add(event.target.dataset.id);
+        }
+    });
+
+
 }
 
