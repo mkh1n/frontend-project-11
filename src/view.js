@@ -84,7 +84,7 @@ const renderPosts = (state, elements, i18nI) => {
   visitPost(state.uiState.visitedPostsId);
 };
 export default (state, elements, i18nI) => {
-  const watchedState = onChange(state, (path, value) => {
+  const view = onChange(state, (path, value) => {
     switch (path) {
       case ('status'):
         formHandler(elements, state, value, i18nI);
@@ -105,5 +105,5 @@ export default (state, elements, i18nI) => {
         break;
     }
   });
-  return watchedState;
+  return view;
 };
