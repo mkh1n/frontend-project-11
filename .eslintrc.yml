@@ -6,6 +6,7 @@ extends:
 parserOptions:
   ecmaVersion: latest
 rules:
+  testing-library/custom-renders': 0
   import/extensions: 0
   import/no-unresolved: 0
   no-param-reassign: 0
