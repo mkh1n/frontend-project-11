@@ -127,31 +127,31 @@ export default () => {
 
   translatePage(elements, i18nI);
 
-  const watchedState = render(state, elements, i18nI);
+  const view = render(state, elements, i18nI);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
-    watchedState.status = 'sending';
+    view.status = 'sending';
     const currentValue = elements.input.value;
-    watchedState.form.value = currentValue;
-    const links = watchedState.feeds.map((feed) => feed.url);
+    view.form.value = currentValue;
+    const links = view.feeds.map((feed) => feed.url);
     validateUrl(currentValue, links)
       .then(() => {
-        loadRss(currentValue, watchedState, i18nI);
+        loadRss(currentValue, view, i18nI);
       }).catch((err) => {
         const message = err.errors.map((error) => i18nI.t(`errors.${error.key}`))[0];
-        watchedState.form.errorMessage = message;
-        watchedState.status = 'error';
+        view.form.errorMessage = message;
+        view.status = 'error';
       });
   });
 
   elements.posts.addEventListener('click', (event) => {
     if (event.target.matches('[data-bs-toggle="modal"]')) {
-      watchedState.uiState.openModalId = event.target.dataset.id;
-      watchedState.uiState.visitedPostsId.add(event.target.dataset.id);
+      view.uiState.openModalId = event.target.dataset.id;
+      view.uiState.visitedPostsId.add(event.target.dataset.id);
     }
     if (event.target.matches(`a[data-id="${event.target.dataset.id}"]`)) {
-      watchedState.uiState.visitedPostsId.add(event.target.dataset.id);
+      view.uiState.visitedPostsId.add(event.target.dataset.id);
     }
   });
 };
