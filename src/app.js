@@ -28,26 +28,26 @@ const addPosts = (posts, feedId, state) => {
   state.posts.unshift(...postsWithId);
 };
 
-  const updateRss = (state) => {
-    const promises = state.feeds.map((feed) => {
-      const { url } = feed;
-      return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${url}`);
-    });
-    Promise.all(promises)
-      .then((responses) => {
-        responses.forEach((response, index) => {
-          const { posts } = parseXml(response.data.contents);
-          const feedId = state.feeds[index].id;
-          addPosts(posts, feedId, state);
-        });
-      })
-      .catch((e)=>{
-        console.log(e)
-      })
-      .finally(() => {
-        setTimeout(updateRss, 5000, state);
+const updateRss = (state) => {
+  const promises = state.feeds.map((feed) => {
+    const { url } = feed;
+    return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${url}`);
+  });
+  Promise.all(promises)
+    .then((responses) => {
+      responses.forEach((response, index) => {
+        const { posts } = parseXml(response.data.contents);
+        const feedId = state.feeds[index].id;
+        addPosts(posts, feedId, state);
       });
-  };
+    })
+    .catch((e) => {
+      console.log(e);
+    })
+    .finally(() => {
+      setTimeout(updateRss, 5000, state);
+    });
+};
 
 const loadRss = (rssLink, state, i18nI) => new Promise((resolve) => {
   axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${rssLink}`)
@@ -59,7 +59,7 @@ const loadRss = (rssLink, state, i18nI) => new Promise((resolve) => {
         addPosts(posts, feedId, state);
         state.form.errorMessage = '';
         state.status = 'sent';
-        console.log(state)
+        console.log(state);
         resolve();
       } catch (e) {
         console.log(e);
@@ -74,9 +74,9 @@ const loadRss = (rssLink, state, i18nI) => new Promise((resolve) => {
 });
 
 const setBrowserLang = (state) => {
-  const clientLang = (navigator.language || navigator.userLanguage).split('-')[0]; 
-  state.language = clientLang == 'ru' ? 'ru' : 'en';
-}
+  const clientLang = (navigator.language || navigator.userLanguage).split('-')[0];
+  state.language = clientLang === 'ru' ? 'ru' : 'en';
+};
 
 const translatePage = (elements, i18nI) => {
   Object.keys(elements.textNodes).forEach((node) => {
