@@ -27,27 +27,27 @@ const addPosts = (posts, feedId, state) => {
   });
   state.posts.unshift(...postsWithId);
 };
-const updateRss = (state, i18nI) => new Promise((resolve) => {
-  const feedLinks = state.feeds.map((feed) => feed.url);
-  feedLinks.forEach((rssLink, index) => {
-    axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${rssLink}`)
-      .then((response) => {
-        const { posts } = parseXml(response.data.contents);
-        const feedId = state.feeds[index].id;
-        addPosts(posts, feedId, state);
-        resolve();
+
+  const updateRss = (state) => {
+    const promises = state.feeds.map((feed) => {
+      const { url } = feed;
+      return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${url}`);
+    });
+    Promise.all(promises)
+      .then((responses) => {
+        responses.forEach((response, index) => {
+          const { posts } = parseXml(response.data.contents);
+          const feedId = state.feeds[index].id;
+          addPosts(posts, feedId, state);
+        });
       })
-      .catch(() => {
-        state.form.errorMessage = i18nI.t('errors.network');
-        state.status = 'error';
+      .catch((e)=>{
+        console.log(e)
       })
       .finally(() => {
-        setTimeout(() => {
-          updateRss(state, i18nI);
-        }, 5000);
+        setTimeout(updateRss, 5000, state);
       });
-  });
-});
+  };
 
 const loadRss = (rssLink, state, i18nI) => new Promise((resolve) => {
   axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${rssLink}`)
@@ -59,9 +59,7 @@ const loadRss = (rssLink, state, i18nI) => new Promise((resolve) => {
         addPosts(posts, feedId, state);
         state.form.errorMessage = '';
         state.status = 'sent';
-        setTimeout(() => {
-          updateRss(state);
-        }, 5000);
+        console.log(state)
         resolve();
       } catch (e) {
         console.log(e);
@@ -74,6 +72,11 @@ const loadRss = (rssLink, state, i18nI) => new Promise((resolve) => {
       state.status = 'error';
     });
 });
+
+const setBrowserLang = (state) => {
+  const clientLang = (navigator.language || navigator.userLanguage).split('-')[0]; 
+  state.language = clientLang == 'ru' ? 'ru' : 'en';
+}
 
 const translatePage = (elements, i18nI) => {
   Object.keys(elements.textNodes).forEach((node) => {
@@ -123,11 +126,13 @@ export default () => {
     resources,
   });
 
+  const view = render(state, elements, i18nI);
+
   yup.setLocale(locale);
 
   translatePage(elements, i18nI);
 
-  const view = render(state, elements, i18nI);
+  setBrowserLang(view);
 
   elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -154,4 +159,5 @@ export default () => {
       view.uiState.visitedPostsId.add(event.target.dataset.id);
     }
   });
+  updateRss(view);
 };
